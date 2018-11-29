@@ -1,0 +1,87 @@
+%Implementation of Watermarking using Discrete Cosine Transform
+%Dans ce code, nous implémentons le Watermarking 
+%en insérant une image dans une autre image sans apporter de changements visibles dans l'image
+
+
+x = double(imread('greens.jpg')); %lire mon image
+figure,imshow(x/255);
+y=x; %je stocke cette image dans une variable
+a=zeros(300,500); %Créez une matrice de zéros de 300 par 500.
+a(100:250,100:350)=1;
+figure,imshow(a);%c'est l'image qu'on va signée 
+save m.dat a -ascii  % stockage de a image dans un fichier de données
+
+%watermarking
+%je met tout les composantes de RGB de x dans les variable x1,x2,x3
+x1=x(:,:,1); 
+x2=x(:,:,2);
+x3=x(:,:,3);
+%j'effectue la DCT sur chacune de ces variables et je les stocke sur
+%dx11,dx22,dx33
+dx1=dct2(x1);dx11=dx1;
+dx2=dct2(x2);dx22=dx2;
+dx3=dct2(x3); dx33=dx3;
+%je charge mon fichier de données
+load m.dat %binary mask for watermarking
+g=10;  %coefficient of watermark's strength     si je fait 1000 le matermark sera visible sur mon image
+% j'affecte lignem et colonnem pour la taille de m(le fichier)
+[lignem,colonnem]=size(m);
+% j'affecte le composant rouge de mon image plus le coefficient de watermark
+% multipliée par m ainsi pour les composantes green et blue
+dx1(1:lignem,1:colonnem)=dx1(1:lignem,1:colonnem) + g*m;
+dx2(1:lignem,1:colonnem)=dx2(1:lignem,1:colonnem) + g*m;
+dx3(1:lignem,1:colonnem)=dx3(1:lignem,1:colonnem) + g*m;
+%affichage
+figure,imshow(dx1);
+figure,imshow(dx2);
+figure,imshow(dx3);
+%reconstruire l'image on utilise la transformée inverse (IDCT).
+
+y1 = idct2(dx1);
+y2 = idct2(dx2);
+y3 = idct2(dx3);
+y(:,:,1)=y1;
+y(:,:,2)=y2;
+y(:,:,3)=y3;
+% 
+figure,imshow(y1);
+figure,imshow(y2);
+figure,imshow(y3);
+%je peut les combiner sur y
+figure,imshow(y);
+figure; imshow(y/255);%double
+% mon image ne change pas beaucoup
+figure; imshow(abs(y-x)*100) %comparaison de l'image y avec l'image x
+
+z = y;%je stock y sur z
+[r,c,s]=size(z);
+
+%de-watermarking
+%clean image(known mask)
+y=z;
+%je prends l'image originale et j'effectue le DCT sur le RGB composantes de l'image y qu'on a créer
+dy1 = dct2(y(:,:,1));
+dy2 = dct2(y(:,:,2));
+dy3 = dct2(y(:,:,3));
+% j'affecte le composant rouge de mon image moins le coefficient de watermark
+% multipliée par m ainsi pour les composantes green et blue
+dy1(1:lignem,1:colonnem)=dy1(1:lignem,1:colonnem) - g*m;
+dy2(1:lignem,1:colonnem)=dy2(1:lignem,1:colonnem) - g*m;
+dy3(1:lignem,1:colonnem)=dy3(1:lignem,1:colonnem) - g*m;
+%je fais la même chose j'applique le idct2 sur chacune des y11, y22 et y33
+y11=idct(dy1);
+y22=idct(dy2);
+y33=idct(dy3);
+yy(:,:,1)=y11;
+yy(:,:,2)=y22;
+yy(:,:,3)=y33;
+figure; imshow(yy/255);%l'image combinée
+figure; imshow(abs(yy-x)*10000); %comparaison montrant toute l'image blanche pour aucune différence b / w et x
+
+
+
+
+
+
+
+
